@@ -1,27 +1,44 @@
 package rest
 
 import (
-	"log"
+	"rvneural/rss/internal/models/rss"
+	dbService "rvneural/rss/internal/services/db"
 	rssService "rvneural/rss/internal/services/rss"
 
 	"github.com/gin-gonic/gin"
 )
 
 type RSS struct {
+	db *dbService.Service
 }
 
 func New() *RSS {
-	return &RSS{}
+	return &RSS{
+		db: dbService.New(),
+	}
+}
+
+type res struct {
+	URL   string
+	Title string
 }
 
 func (r *RSS) Get(c *gin.Context) {
-	url := "https://media.kpfu.ru/news-rss"
-	service := rssService.New("Реальное время", "Сводка новостей", "http://realnoevremya.ru/")
-	feed, err := service.Parse(url, "Казанский (Приволжский) Федеральный Университет")
+
+	var feeds []*rss.RSS
+	db_feeds, err := r.db.GetFeeds()
 	if err != nil {
-		log.Println(err)
-		c.XML(200, gin.H{"error": err.Error()})
+		c.AbortWithError(500, err)
 		return
 	}
-	c.XML(200, service.Merge(true, feed))
+
+	service := rssService.New("Реальное время", "Сводка новостей", "http://realnoevremya.ru/")
+	for _, feed := range db_feeds {
+		feed, err := service.Parse(feed.URL, feed.Title)
+		if err != nil {
+			continue
+		}
+		feeds = append(feeds, feed)
+	}
+	c.XML(200, service.Merge(true, feeds...))
 }

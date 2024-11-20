@@ -114,7 +114,8 @@ func (p *Parser) Merge(today bool, feeds ...*rss.RSS) *rss.RSS {
 				log.Println("Дата:", date)
 				log.Println("Сегодня:", time.Now())
 			}
-			if today && (date.Day() != time.Now().Day() || date.Month() != time.Now().Month()) {
+
+			if today && (time.Now().Sub(date) > time.Hour*24) {
 				continue
 			}
 			if feed.Channel.Title != "" {
@@ -145,9 +146,9 @@ func (p *Parser) sortByDate(items ...rss.Item) []rss.Item {
 			greater = append(greater, item)
 		}
 	}
-	sortedItems = append(sortedItems, p.sortByDate(less...)...)
-	sortedItems = append(sortedItems, pivot)
 	sortedItems = append(sortedItems, p.sortByDate(greater...)...)
+	sortedItems = append(sortedItems, pivot)
+	sortedItems = append(sortedItems, p.sortByDate(less...)...)
 
 	return sortedItems
 }
