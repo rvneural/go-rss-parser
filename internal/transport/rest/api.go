@@ -24,7 +24,7 @@ type res struct {
 }
 
 func (r *RSS) Get(c *gin.Context) {
-
+	today := c.Query("today") == "1" || c.Query("today") == "true"
 	var feeds []*rss.RSS
 	db_feeds, err := r.db.GetFeeds()
 	if err != nil {
@@ -40,5 +40,5 @@ func (r *RSS) Get(c *gin.Context) {
 		}
 		feeds = append(feeds, feed)
 	}
-	c.XML(200, service.Merge(true, feeds...))
+	c.XML(200, service.Merge(today, feeds...))
 }
