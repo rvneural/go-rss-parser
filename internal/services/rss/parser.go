@@ -109,12 +109,6 @@ func (p *Parser) Merge(today bool, feeds ...*rss.RSS) *rss.RSS {
 	for _, feed := range feeds {
 		for _, item := range feed.Channel.Items {
 			date, _ := time.Parse(time.RFC1123Z, item.PubDate)
-			if today {
-				log.Println("Параметры:", item.PubDate)
-				log.Println("Дата:", date)
-				log.Println("Сегодня:", time.Now())
-			}
-
 			if today && (time.Now().Sub(date) > time.Hour*24) {
 				continue
 			}
