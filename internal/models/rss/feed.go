@@ -10,6 +10,7 @@ type Item struct {
 	Description string   `xml:"description"`
 	FullText    string   `xml:"full-text"`
 	Source      string   `xml:"source"`
+	Summary     string   `xml:"summary"`
 }
 
 type Channel struct {
@@ -22,5 +23,6 @@ type Channel struct {
 
 type RSS struct {
 	XMLName xml.Name `xml:"rss"`
+	Version string   `xml:"version,attr"`
 	Channel Channel  `xml:"channel"`
 }
