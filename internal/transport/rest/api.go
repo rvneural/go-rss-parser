@@ -17,7 +17,7 @@ func New() *RSS {
 func (r *RSS) Get(c *gin.Context) {
 	url := "https://media.kpfu.ru/news-rss"
 	service := rssService.New("Реальное время", "Сводка новостей", "http://realnoevremya.ru/")
-	feed, err := service.Parse(url)
+	feed, err := service.Parse(url, "Казанский (Приволжский) Федеральный Университет")
 	if err != nil {
 		log.Println(err)
 		c.XML(200, gin.H{"error": err.Error()})

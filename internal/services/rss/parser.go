@@ -29,7 +29,7 @@ func New(title, description, link string) *Parser {
 	}
 }
 
-func (p *Parser) parseAtom(link string) (*rss.RSS, error) {
+func (p *Parser) parseAtom(link, title string) (*rss.RSS, error) {
 	feed, err := p.parser.ParseURL(link)
 	if err != nil {
 		return nil, err
@@ -47,6 +47,7 @@ func (p *Parser) parseAtom(link string) (*rss.RSS, error) {
 		}
 		myFeed.Channel.Items = append(myFeed.Channel.Items, myItem)
 	}
+	myFeed.Channel.Title = title
 	return p.clearHTML(&myFeed), nil
 }
 
@@ -60,7 +61,7 @@ func (p *Parser) clearHTML(rss *rss.RSS) *rss.RSS {
 	return rss
 }
 
-func (p *Parser) Parse(link string) (*rss.RSS, error) {
+func (p *Parser) Parse(link, title string) (*rss.RSS, error) {
 	request, err := http.NewRequest(http.MethodGet, link, nil)
 	if err != nil {
 		return nil, err
@@ -84,7 +85,7 @@ func (p *Parser) Parse(link string) (*rss.RSS, error) {
 	err = xml.Unmarshal(byteFeed, &feed)
 	if err != nil {
 		log.Println("Parsing atom")
-		return p.parseAtom(link)
+		return p.parseAtom(link, title)
 	}
 	newItems := make([]rss.Item, len(feed.Channel.Items))
 	for i, item := range feed.Channel.Items {
@@ -95,6 +96,7 @@ func (p *Parser) Parse(link string) (*rss.RSS, error) {
 		newItems[i] = item
 	}
 	feed.Channel.Items = newItems
+	feed.Channel.Title = title
 	return p.clearHTML(&feed), nil
 }
 
