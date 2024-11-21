@@ -58,8 +58,8 @@ func (s *Service) AddFeed(feed model.RSS) (err error) {
 	}
 	defer db.Close()
 
-	request := "INSERT INTO " + s.table + " (url, title) VALUES ($1, $2, $3, $4)"
-	_, err = db.Exec(request, feed.URL, feed.Title)
+	request := "INSERT INTO " + s.table + " (url, title, type) VALUES ($1, $2, $3)"
+	_, err = db.Exec(request, feed.URL, feed.Title, feed.Type)
 	return err
 }
 

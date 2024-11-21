@@ -74,7 +74,7 @@ func (r *RSS) GetFeedList(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	c.JSON(200, feeds)
+	c.JSON(200, gin.H{"feeds": feeds})
 }
 
 func (r *RSS) AddFeed(c *gin.Context) {
@@ -83,6 +83,13 @@ func (r *RSS) AddFeed(c *gin.Context) {
 	if err != nil {
 		c.AbortWithError(400, err)
 		return
+	}
+	if feed.URL == "" || feed.Title == "" {
+		c.AbortWithError(400, err)
+		return
+	}
+	if feed.Type == "" {
+		feed.Type = "rss"
 	}
 	err = r.db.AddFeed(feed)
 	if err != nil {
