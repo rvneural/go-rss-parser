@@ -126,12 +126,15 @@ func (p *Parser) clearHTML(rss *rss.RSS) *rss.RSS {
 			rss.Channel.Items[i].Title = strings.ReplaceAll(rss.Channel.Items[i].Title, "&amp;", "&")
 		}
 
+		rss.Channel.Items[i].Link = strings.TrimSpace(item.Link)
+
 		date, err := time.Parse(time.RFC1123Z, item.PubDate)
 		if err != nil {
 			continue
 		}
 		date = p.inSameClock(date, eastOfUTC)
 		rss.Channel.Items[i].PubDate = date.Format(time.RFC1123Z)
+
 	}
 	return rss
 }
