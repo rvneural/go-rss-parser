@@ -38,7 +38,7 @@ func (s *Service) connect() (*sqlx.DB, error) {
 }
 
 func (s *Service) GetFeeds() (dbResult []model.RSS, err error) {
-	dbResult = make([]model.RSS, 0, 31)
+	dbResult = make([]model.RSS, 0, 35)
 	db, err := s.connect()
 	if err != nil {
 		return dbResult, err
@@ -49,4 +49,28 @@ func (s *Service) GetFeeds() (dbResult []model.RSS, err error) {
 
 	err = db.Select(&dbResult, request)
 	return dbResult, err
+}
+
+func (s *Service) AddFeed(feed model.RSS) (err error) {
+	db, err := s.connect()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	request := "INSERT INTO " + s.table + " (url, title) VALUES ($1, $2, $3, $4)"
+	_, err = db.Exec(request, feed.URL, feed.Title)
+	return err
+}
+
+func (s *Service) DeleteFeed(id int) (err error) {
+	db, err := s.connect()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	request := "DELETE FROM " + s.table + " WHERE id = $1"
+	_, err = db.Exec(request, id)
+	return err
 }

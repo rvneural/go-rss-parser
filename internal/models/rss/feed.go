@@ -24,5 +24,6 @@ type Channel struct {
 type RSS struct {
 	XMLName xml.Name `xml:"rss"`
 	Version string   `xml:"version,attr"`
+	Length  string   `xml:"length"`
 	Channel Channel  `xml:"channel"`
 }

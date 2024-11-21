@@ -12,7 +12,10 @@ type App struct {
 func New() *App {
 	app := endpoint.New()
 	api := rest.New()
-	app.GetHandler("/", api.Get)
+	app.GetHandler("/feed", api.GetFeed)
+	app.PostHandler("/feed", api.AddFeed)
+	app.DeleteHandler("/feed/:id", api.DeleteFeed)
+	app.GetHandler("/list", api.GetFeedList)
 	return &App{
 		app: app,
 	}

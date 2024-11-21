@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,6 +11,7 @@ type App struct {
 
 func New() *App {
 	app := gin.Default()
+	app.Use(gzip.Gzip(gzip.BestCompression))
 	return &App{
 		engine: app,
 	}

@@ -4,6 +4,7 @@ go 1.23.1
 
 require (
 	github.com/denisbrodbeck/striphtmltags v6.6.6+incompatible
+	github.com/gin-contrib/gzip v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
