@@ -90,6 +90,7 @@ func (p *Parser) parseAtom(link, title string) (*rss.RSS, error) {
 }
 
 func (p *Parser) clearHTML(rss *rss.RSS) *rss.RSS {
+	eastOfUTC := time.FixedZone("UTC+3", 3*60*60)
 	for i, item := range rss.Channel.Items {
 
 		if rss.Channel.Items[i].Description != "" {
@@ -124,6 +125,13 @@ func (p *Parser) clearHTML(rss *rss.RSS) *rss.RSS {
 			rss.Channel.Items[i].Title = strings.ReplaceAll(rss.Channel.Items[i].Title, "&quot;", "\"")
 			rss.Channel.Items[i].Title = strings.ReplaceAll(rss.Channel.Items[i].Title, "&amp;", "&")
 		}
+
+		date, err := time.Parse(time.RFC1123Z, item.PubDate)
+		if err != nil {
+			continue
+		}
+		date = p.inSameClock(date, eastOfUTC)
+		rss.Channel.Items[i].PubDate = date.Format(time.RFC1123Z)
 	}
 	return rss
 }
@@ -192,6 +200,7 @@ func (p *Parser) Merge(today bool, feeds ...*rss.RSS) *rss.RSS {
 	myFeed.Version = "2.0"
 	wg := sync.WaitGroup{}
 	mutex := sync.Mutex{}
+	eastOfUTC := time.FixedZone("UTC+3", 3*60*60)
 	for _, feed := range feeds {
 		wg.Add(1)
 		go func(feed *rss.RSS, myFeed *rss.RSS) {
@@ -202,6 +211,7 @@ func (p *Parser) Merge(today bool, feeds ...*rss.RSS) *rss.RSS {
 				go func(item *rss.Item, myFeed *rss.RSS) {
 					defer wg2.Done()
 					date, _ := time.Parse(time.RFC1123Z, item.PubDate)
+					date = p.inSameClock(date, eastOfUTC)
 					if today && (time.Now().Sub(date) > time.Hour*24) {
 						return
 					}
@@ -245,4 +255,9 @@ func (p *Parser) sortByDate(items ...rss.Item) []rss.Item {
 	sortedItems = append(sortedItems, p.sortByDate(less...)...)
 
 	return sortedItems
+}
+
+func (p *Parser) inSameClock(t time.Time, loc *time.Location) time.Time {
+	y, m, d := t.Date()
+	return time.Date(y, m, d, t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), loc)
 }
