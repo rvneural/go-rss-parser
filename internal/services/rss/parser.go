@@ -215,7 +215,7 @@ func (p *Parser) Merge(today bool, feeds ...*rss.RSS) *rss.RSS {
 					defer wg2.Done()
 					date, _ := time.Parse(time.RFC1123Z, item.PubDate)
 					date = p.inSameClock(date, eastOfUTC)
-					if today && (time.Now().Sub(date) > time.Hour*24) {
+					if today && (time.Now().Day() != date.Day() || time.Now().Month() != date.Month() || time.Now().Year() != date.Year()) {
 						return
 					}
 					if feed.Channel.Title != "" {
