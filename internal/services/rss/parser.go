@@ -102,6 +102,8 @@ func (p *Parser) clearHTML(rss *rss.RSS) *rss.RSS {
 			rss.Channel.Items[i].Description = strings.ReplaceAll(rss.Channel.Items[i].Description, "&ndash;", "–")
 			rss.Channel.Items[i].Description = strings.ReplaceAll(rss.Channel.Items[i].Description, "&quot;", "\"")
 			rss.Channel.Items[i].Description = strings.ReplaceAll(rss.Channel.Items[i].Description, "&amp;", "&")
+			rss.Channel.Items[i].Description = strings.ReplaceAll(rss.Channel.Items[i].Description, "&#40;", "(")
+			rss.Channel.Items[i].Description = strings.ReplaceAll(rss.Channel.Items[i].Description, "&#41;", ")")
 		}
 
 		if rss.Channel.Items[i].FullText != "" {
@@ -113,6 +115,8 @@ func (p *Parser) clearHTML(rss *rss.RSS) *rss.RSS {
 			rss.Channel.Items[i].FullText = strings.ReplaceAll(rss.Channel.Items[i].FullText, "&ndash;", "–")
 			rss.Channel.Items[i].FullText = strings.ReplaceAll(rss.Channel.Items[i].FullText, "&quot;", "\"")
 			rss.Channel.Items[i].FullText = strings.ReplaceAll(rss.Channel.Items[i].FullText, "&amp;", "&")
+			rss.Channel.Items[i].FullText = strings.ReplaceAll(rss.Channel.Items[i].FullText, "&#40;", "(")
+			rss.Channel.Items[i].FullText = strings.ReplaceAll(rss.Channel.Items[i].FullText, "&#41;", ")")
 		}
 
 		if rss.Channel.Items[i].Title != "" {
@@ -124,6 +128,8 @@ func (p *Parser) clearHTML(rss *rss.RSS) *rss.RSS {
 			rss.Channel.Items[i].Title = strings.ReplaceAll(rss.Channel.Items[i].Title, "&ndash;", "–")
 			rss.Channel.Items[i].Title = strings.ReplaceAll(rss.Channel.Items[i].Title, "&quot;", "\"")
 			rss.Channel.Items[i].Title = strings.ReplaceAll(rss.Channel.Items[i].Title, "&amp;", "&")
+			rss.Channel.Items[i].Title = strings.ReplaceAll(rss.Channel.Items[i].Title, "&#40;", "(")
+			rss.Channel.Items[i].Title = strings.ReplaceAll(rss.Channel.Items[i].Title, "&#41;", ")")
 		}
 
 		rss.Channel.Items[i].Link = strings.TrimSpace(item.Link)
