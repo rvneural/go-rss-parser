@@ -17,11 +17,14 @@ type RSS struct {
 	db       *dbService.Service
 	feedList []db.RSS
 	lastRead time.Time
+	service  *rssService.Parser
 }
 
 func New() *RSS {
+	service := rssService.New("Реальное время", "Сводка новостей", "http://realnoevremya.ru/")
 	return &RSS{
-		db: dbService.New(),
+		db:      dbService.New(),
+		service: service,
 	}
 }
 
@@ -32,6 +35,7 @@ type res struct {
 
 func (r *RSS) GetFeed(c *gin.Context) {
 	today := c.Query("today") == "1" || c.Query("today") == "true"
+	fulltext := c.Query("text") == "1" || c.Query("text") == "true"
 	updateTime, err := strconv.Atoi(os.Getenv("UPDATE_TIME"))
 	if err != nil {
 		updateTime = 30
@@ -49,13 +53,12 @@ func (r *RSS) GetFeed(c *gin.Context) {
 	mutex := sync.Mutex{}
 	wg := sync.WaitGroup{}
 
-	service := rssService.New("Реальное время", "Сводка новостей", "http://realnoevremya.ru/")
 	var feeds []*rss.RSS
 	for _, feedElement := range r.feedList {
 		wg.Add(1)
 		go func(feeds *([]*rss.RSS)) {
 			defer wg.Done()
-			feed, err := service.Parse(feedElement.URL, feedElement.Title)
+			feed, err := r.service.Parse(feedElement.URL, feedElement.Title, fulltext, today)
 			if err != nil {
 				return
 			}
@@ -65,7 +68,7 @@ func (r *RSS) GetFeed(c *gin.Context) {
 		}(&feeds)
 	}
 	wg.Wait()
-	c.XML(200, service.Merge(today, feeds...))
+	c.XML(200, r.service.Merge(today, feeds...))
 }
 
 func (r *RSS) GetFeedList(c *gin.Context) {

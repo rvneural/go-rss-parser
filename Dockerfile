@@ -7,9 +7,7 @@ RUN apt-get install -y ca-certificates
 
 EXPOSE 7001
 
-COPY . .
-
-WORKDIR /build/linux
+COPY build/linux/rss .
 
 CMD [ "./rss" ]
 

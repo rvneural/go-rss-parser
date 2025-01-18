@@ -24,6 +24,7 @@ type Parser struct {
 	link        string
 	parser      *gofeed.Parser
 	timeout     time.Duration
+	urlParser   string
 }
 
 func New(title, description, link string) *Parser {
@@ -40,6 +41,7 @@ func New(title, description, link string) *Parser {
 		link:        link,
 		parser:      gofeed.NewParser(),
 		timeout:     time.Second * time.Duration(maxTimeOut),
+		urlParser:   os.Getenv("WEB_PARSER"),
 	}
 }
 
@@ -57,7 +59,7 @@ func (p *Parser) parseAtomWithChannel(link string) <-chan *gofeed.Feed {
 	return ch
 }
 
-func (p *Parser) parseAtom(link, title string) (*rss.RSS, error) {
+func (p *Parser) parseAtom(link, title string, fulltext, today bool) (*rss.RSS, error) {
 	select {
 	case <-time.After(p.timeout):
 		return nil, fmt.Errorf("Timeout")
@@ -70,7 +72,12 @@ func (p *Parser) parseAtom(link, title string) (*rss.RSS, error) {
 		myFeed.Channel.Description = feed.Description
 		myFeed.Channel.Link = feed.Link
 		wg := sync.WaitGroup{}
+		mu := sync.Mutex{}
 		for _, item := range feed.Items {
+			date := item.PublishedParsed
+			if today && (time.Now().Day() > date.Day() || time.Now().Month() != date.Month() || time.Now().Year() != date.Year()) {
+				break
+			}
 			wg.Add(1)
 			go func(myFeed *rss.RSS) {
 				defer wg.Done()
@@ -80,7 +87,14 @@ func (p *Parser) parseAtom(link, title string) (*rss.RSS, error) {
 					Link:        item.Link,
 					PubDate:     item.PublishedParsed.Format(time.RFC1123Z),
 				}
+				if fulltext {
+					if text, err := p.ParseURL(myItem.Link); err == nil {
+						myItem.FullText = text
+					}
+				}
+				mu.Lock()
 				myFeed.Channel.Items = append(myFeed.Channel.Items, myItem)
+				mu.Unlock()
 			}(&myFeed)
 		}
 		wg.Wait()
@@ -145,10 +159,9 @@ func (p *Parser) clearHTML(rss *rss.RSS) *rss.RSS {
 	return rss
 }
 
-func (p *Parser) Parse(link, title string) (*rss.RSS, error) {
-
+func (p *Parser) Parse(link, title string, fulltext, today bool) (*rss.RSS, error) {
 	if strings.Contains(link, "www.rospotrebnadzor.ru") {
-		return p.parseAtom(link, title)
+		return p.parseAtom(link, title, fulltext, today)
 	}
 
 	request, err := http.NewRequest(http.MethodGet, link, nil)
@@ -180,17 +193,30 @@ func (p *Parser) Parse(link, title string) (*rss.RSS, error) {
 	var feed rss.RSS
 	err = xml.Unmarshal(byteFeed, &feed)
 	if err != nil {
-		return p.parseAtom(link, title)
+		return p.parseAtom(link, title, fulltext, today)
 	}
 	newItems := make([]rss.Item, len(feed.Channel.Items))
 	wg := sync.WaitGroup{}
+	eastOfUTC := time.FixedZone("UTC+3", 3*60*60)
 	for i, item := range feed.Channel.Items {
+		date, _ := time.Parse(time.RFC1123Z, item.PubDate)
+		date = p.inSameClock(date, eastOfUTC)
+		if today && (time.Now().Day() > date.Day() || time.Now().Month() != date.Month() || time.Now().Year() != date.Year()) {
+			break
+		}
 		wg.Add(1)
 		go func(newItems *[]rss.Item, i int) {
 			defer wg.Done()
-			if len(strings.TrimSpace(item.FullText)) == 0 && strings.TrimSpace(item.Summary) != "" {
-				item.FullText = item.Summary
-				item.Summary = ""
+			if strings.TrimSpace(item.FullText) == "" {
+				if !strings.Contains(item.Link, "rkn.gov.ru") {
+					if strings.TrimSpace(item.Summary) != "" && !strings.HasSuffix(strings.TrimSpace(item.Summary), "Читать далее") {
+						item.FullText = item.Summary
+					} else if fulltext {
+						if text, err := p.ParseURL(item.Link); err == nil {
+							item.FullText = text
+						}
+					}
+				}
 			}
 			(*newItems)[i] = item
 		}(&newItems, i)
